@@ -22,11 +22,11 @@ ALPINESETUP="source /etc/profile
 echo kindle > /etc/hostname
 echo \"nameserver 8.8.8.8\" > /etc/resolv.conf
 mkdir /run/dbus
+cat /etc/alpine-release
 apk update
 apk upgrade
-cat /etc/alpine-release
-apk add xorg-server-xephyr xwininfo xdotool xinput dbus-x11 sudo bash nano git
-apk add desktop-file-utils gtk-engines consolekit gtk-murrine-engine caja caja-extensions marco gnome-themes-extra
+apk add xorg-server-xephyr xwininfo xdotool xinput dbus-x11 sudo bash vim git
+apk add gtk-engines consolekit gtk-murrine-engine caja caja-extensions marco
 apk add \$(apk search mate -q | grep -v '\-dev' | grep -v '\-lang' | grep -v '\-doc')
 apk add \$(apk search -q ttf- | grep -v '\-doc')
 apk add onboard chromium
@@ -74,13 +74,13 @@ killall Xephyr'
 # read in the APKINDEX what version it is currently to get the correct download link. It is extracted in /tmp and deleted
 # again at the end of the script
 echo "Determining version of apk-tools-static"
-curl "$REPO/latest-stable/main/armhf/APKINDEX.tar.gz" --output /tmp/APKINDEX.tar.gz
+curl "$REPO/edge/main/armhf/APKINDEX.tar.gz" --output /tmp/APKINDEX.tar.gz
 tar -xzf /tmp/APKINDEX.tar.gz -C /tmp
 APKVER="$(cut -d':' -f2 <<<"$(grep -A 5 "P:apk-tools-static" /tmp/APKINDEX | grep "V:")")" # Grep for the version in APKINDEX
 rm /tmp/APKINDEX /tmp/APKINDEX.tar.gz /tmp/DESCRIPTION # Remove what we downloaded and extracted
 echo "Version of apk-tools-static is: $APKVER"
 echo "Downloading apk-tools-static"
-curl "$REPO/latest-stable/main/armv7/apk-tools-static-$APKVER.apk" --output "/tmp/apk-tools-static.apk"
+curl "$REPO/edge/main/armv7/apk-tools-static-$APKVER.apk" --output "/tmp/apk-tools-static.apk"
 tar -xzf "/tmp/apk-tools-static.apk" -C /tmp # extract apk-tools-static to /tmp
 
 
@@ -124,7 +124,7 @@ echo "$REPO/edge/main/
 $REPO/edge/community/
 $REPO/edge/testing/
 #Here comes a hack because Chromium isn't in edge
-$REPO/latest-stable/community" > "$MNT/etc/apk/repositories"
+$REPO/edge/community" > "$MNT/etc/apk/repositories"
 # Create the script to start the gui
 echo "$STARTGUI" > "$MNT/startgui.sh"
 chmod +x "$MNT/startgui.sh"
