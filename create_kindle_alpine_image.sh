@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euxo pipefail
 
 # DEPENDENCIES
 # qemu-user-static is required to run arm software using the "qemu-arm-static" command (I suppose you use this script on a X86_64 computer)
@@ -97,7 +98,7 @@ tune2fs -i 0 -c 0 "$IMAGE"
 # The mountpoint is created (doesn't matter if it exists already) and the empty ext3-filsystem is mounted in it
 echo "Mounting image"
 mkdir -p "$MNT"
-mount -o loop -t ext3 "$IMAGE" "$MNT"
+strace mount -o loop -t ext3 "$IMAGE" "$MNT"
 
 
 # BOOTSTRAPPING ALPINE
@@ -135,7 +136,7 @@ chmod +x "$MNT/startgui.sh"
 cp $(which qemu-arm-static) "$MNT/usr/bin/"
 # Chroot and run the setup as specified at the beginning of the script
 echo "Chrooting into Alpine"
-chroot /mnt/alpine/ qemu-arm-static /bin/sh -c "$ALPINESETUP"
+strace chroot /mnt/alpine/ qemu-arm-static /bin/sh -c "$ALPINESETUP"
 # Remove the qemu-arm-static binary again, it's not needed on the kindle
 rm "$MNT/usr/bin/qemu-arm-static"
 
@@ -149,7 +150,7 @@ kill $(lsof +f -t "$MNT")
 echo "Unmounting image"
 umount "$MNT/sys"
 umount "$MNT/proc"
-umount -lf "$MNT/dev"
+umount -lf "$MNT/dev" || umount "$MNT/dev"
 umount "$MNT"
 while [[ $(mount | grep "$MNT") ]]
 do
