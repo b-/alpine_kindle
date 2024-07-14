@@ -18,7 +18,7 @@ set -euxo pipefail
 REPO="http://dl-cdn.alpinelinux.org/alpine"
 MNT="/mnt/alpine"
 IMAGE="./alpine.ext3"
-IMAGESIZE=2048 #Megabytes
+IMAGESIZE=3072 #Megabytes
 ALPINESETUP="source /etc/profile
 echo kindle > /etc/hostname
 echo \"nameserver 8.8.8.8\" > /etc/resolv.conf
@@ -55,9 +55,7 @@ mkdir -p /usr/share/chromium/extensions
 echo '{
 	\"external_update_url\": \"https://clients2.google.com/service/update2/crx\"
 }' > /usr/share/chromium/extensions/cjpalhdlnbpafiamejdnhcphjbkeiagm.json
-
-echo \"You're now dropped into an interactive shell in Alpine, feel free to explore and type exit to leave.\"
-sh"
+"
 STARTGUI='#!/bin/sh
 chmod a+w /dev/shm # Otherwise the alpine user cannot use this (needed for chromium)
 SIZE=$(xwininfo -root -display :0 | egrep "geometry" | cut -d " "  -f4)
@@ -98,7 +96,7 @@ tune2fs -i 0 -c 0 "$IMAGE"
 # The mountpoint is created (doesn't matter if it exists already) and the empty ext3-filsystem is mounted in it
 echo "Mounting image"
 mkdir -p "$MNT"
-strace mount -o loop -t ext3 "$IMAGE" "$MNT"
+mount -o loop -t ext3 "$IMAGE" "$MNT"
 
 
 # BOOTSTRAPPING ALPINE
@@ -136,7 +134,7 @@ chmod +x "$MNT/startgui.sh"
 cp $(which qemu-arm-static) "$MNT/usr/bin/"
 # Chroot and run the setup as specified at the beginning of the script
 echo "Chrooting into Alpine"
-strace chroot /mnt/alpine/ qemu-arm-static /bin/sh -c "$ALPINESETUP"
+chroot /mnt/alpine/ qemu-arm-static /bin/sh -c "$ALPINESETUP"
 # Remove the qemu-arm-static binary again, it's not needed on the kindle
 rm "$MNT/usr/bin/qemu-arm-static"
 
@@ -145,18 +143,21 @@ rm "$MNT/usr/bin/qemu-arm-static"
 # Sync to disc
 sync
 # Kill remaining processes
-kill $(lsof +f -t "$MNT")
+REMAINING_PROC="$(lsof +f -t "$MNT")" || true # would you kindly shut the fuck up
+if [[ -n "${REMAINING_PROC}" ]] ; then
+	kill "${REMAINING_PROC}"
+fi
 # We unmount in reverse order
 echo "Unmounting image"
 umount "$MNT/sys"
 umount "$MNT/proc"
 umount -lf "$MNT/dev" || umount "$MNT/dev"
-umount "$MNT"
+umount -Rf "$MNT"
 while [[ $(mount | grep "$MNT") ]]
 do
 	echo "Alpine is still mounted, please wait.."
 	sleep 3
-	umount "$MNT"
+	umount -Rf "$MNT"
 done
 echo "Alpine unmounted"
 
