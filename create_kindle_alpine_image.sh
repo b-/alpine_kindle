@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euxo pipefail
 
 # DEPENDENCIES
 # qemu-user-static is required to run arm software using the "qemu-arm-static" command (I suppose you use this script on a X86_64 computer)
@@ -17,7 +18,7 @@
 REPO="http://dl-cdn.alpinelinux.org/alpine"
 MNT="/mnt/alpine"
 IMAGE="./alpine.ext3"
-IMAGESIZE=2048 #Megabytes
+IMAGESIZE=3072 #Megabytes
 ALPINESETUP="source /etc/profile
 echo kindle > /etc/hostname
 echo \"nameserver 8.8.8.8\" > /etc/resolv.conf
@@ -54,9 +55,7 @@ mkdir -p /usr/share/chromium/extensions
 echo '{
 	\"external_update_url\": \"https://clients2.google.com/service/update2/crx\"
 }' > /usr/share/chromium/extensions/cjpalhdlnbpafiamejdnhcphjbkeiagm.json
-
-echo \"You're now dropped into an interactive shell in Alpine, feel free to explore and type exit to leave.\"
-sh"
+"
 STARTGUI='#!/bin/sh
 chmod a+w /dev/shm # Otherwise the alpine user cannot use this (needed for chromium)
 SIZE=$(xwininfo -root -display :0 | egrep "geometry" | cut -d " "  -f4)
@@ -144,18 +143,21 @@ rm "$MNT/usr/bin/qemu-arm-static"
 # Sync to disc
 sync
 # Kill remaining processes
-kill $(lsof +f -t "$MNT")
+REMAINING_PROC="$(lsof +f -t "$MNT")" || true # would you kindly shut the fuck up
+if [[ -n "${REMAINING_PROC}" ]] ; then
+	kill "${REMAINING_PROC}"
+fi
 # We unmount in reverse order
 echo "Unmounting image"
 umount "$MNT/sys"
 umount "$MNT/proc"
-umount -lf "$MNT/dev"
-umount "$MNT"
+umount -lf "$MNT/dev" || umount "$MNT/dev"
+umount -Rf "$MNT"
 while [[ $(mount | grep "$MNT") ]]
 do
 	echo "Alpine is still mounted, please wait.."
 	sleep 3
-	umount "$MNT"
+	umount -Rf "$MNT"
 done
 echo "Alpine unmounted"
 

@@ -1,0 +1,17 @@
+name: build_and_release
+
+on:
+    push:
+        branches: [ master, dev ]
+    pull_request:
+        branches: [ master, dev ]
+    workflow_dispatch:
+
+jobs:
+    build:
+      runs-on: ubuntu-latest
+      steps:
+      - name: checkout repo
+        uses: actions/checkout@main
+      - name: build application
+        run: just ci
