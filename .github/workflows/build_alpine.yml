@@ -13,5 +13,7 @@ jobs:
       steps:
       - name: checkout repo
         uses: actions/checkout@main
+      - name: bootstrap build
+        run: ./bootstrap.sh
       - name: build application
         run: just ci
