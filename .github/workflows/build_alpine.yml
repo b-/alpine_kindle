@@ -17,3 +17,15 @@ jobs:
         run: ./bootstrap.sh
       - name: build application
         run: just ci
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: |
+            alpine.zip
+      - name: upload release
+        id: upload
+        env:
+            GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete build --yes || true
+          gh release create build --latest --generate-notes alpine.zip
